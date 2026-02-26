@@ -1,12 +1,14 @@
 # Perth Fuel
 
-`React.js`
-State management: `zustand`
-UI: `mui`
+[Demo](https://perthfuel.seanboaden.dev/)
+
+- `React.js`
+- State management: `zustand`
+- UI: `mui`
 
 **Third-Party**
-`react-mapbox-gl`
-[FuelWatch API](https://www.fuelwatch.wa.gov.au/)
+- `react-mapbox-gl`
+- [FuelWatch API](https://www.fuelwatch.wa.gov.au/)
 
 ## `npm start`
 
