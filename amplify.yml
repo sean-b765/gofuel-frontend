@@ -5,17 +5,14 @@ frontend:
   phases:
     preBuild:
       commands:
-        - corepack enable
-        - corepack prepare pnpm@latest --activate
-        - pnpm install --frozen-lockfile
+        - npm ci --cache .npm --prefer-offline --legacy-peer-deps
     build:
       commands:
-        - pnpm run build
+        - npm run build
   artifacts:
     baseDirectory: build
     files:
       - "**/*"
   cache:
     paths:
-      - node_modules/**/*
-      - .pnpm-store/**/*
+      - .npm/**/*

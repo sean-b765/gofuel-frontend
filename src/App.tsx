@@ -27,8 +27,10 @@ function App() {
   const setDate = useStore((state) => state.setDate)
 
   useEffect(() => {
+    let watchId: number | undefined
+
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      watchId = navigator.geolocation.watchPosition(
         (pos) => {
           setUserLocation({
             lat: pos.coords.latitude,
@@ -46,6 +48,10 @@ function App() {
     Emitter.on("AXIOS_STOP", () => {
       setLoading((state) => false)
     })
+
+    return () => {
+      if (watchId !== undefined) navigator.geolocation.clearWatch(watchId)
+    }
   }, [])
 
   const debouncedFetch = useCallback(
