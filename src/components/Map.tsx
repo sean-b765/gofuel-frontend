@@ -51,7 +51,7 @@ const Map = () => {
       // Register images
       mapRef.current.loadImage(disabledPin, (err, img) => {
         if (mapRef.current == null || err) return
-        mapRef.current.addImage("disabled-pin", img as ImageBitmap)
+        mapRef.current.addImage("disabled-pin", img as ImageBitmap, { sdf: true })
       })
 
       setInitialised(true)

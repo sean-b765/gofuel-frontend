@@ -65,6 +65,9 @@ export default function StationMarkers({ map }: Props) {
           "icon-anchor": "bottom",
           "icon-size": 0.1,
         },
+        paint: {
+          "icon-color": "#023f7a"
+        }
       })
       geoJsonSource.current = map.getSource("stations")
 
