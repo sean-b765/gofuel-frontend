@@ -27,10 +27,19 @@ function App() {
   const setDate = useStore((state) => state.setDate)
 
   useEffect(() => {
+    let watchId: number | undefined
+
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-      })
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setUserLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          })
+        },
+        undefined,
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      )
     }
 
     Emitter.on("AXIOS_START", () => {
@@ -40,8 +49,9 @@ function App() {
       setLoading((state) => false)
     })
 
-    // cleanup
-    return () => {}
+    return () => {
+      if (watchId !== undefined) navigator.geolocation.clearWatch(watchId)
+    }
   }, [])
 
   const debouncedFetch = useCallback(

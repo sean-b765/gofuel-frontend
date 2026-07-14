@@ -51,11 +51,18 @@ const Map = () => {
       // Register images
       mapRef.current.loadImage(disabledPin, (err, img) => {
         if (mapRef.current == null || err) return
+        if (mapRef.current.hasImage("disabled-pin")) return
         mapRef.current.addImage("disabled-pin", img as ImageBitmap, { sdf: true })
       })
 
       setInitialised(true)
     })
+
+    return () => {
+      map.remove()
+      mapRef.current = null
+      setInitialised(false)
+    }
   }, [])
 
   // Initialize the map center

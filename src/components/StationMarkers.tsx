@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react"
 import { useStore } from "../state/state"
 import { GeoJSONSource, Map, MapMouseEvent } from "mapbox-gl"
+import { createPriceColor } from "../services/colour"
 
 type Props = {
   map: Map | null
@@ -11,6 +12,8 @@ export default function StationMarkers({ map }: Props) {
   const selectedStation = useStore((state) => state.selectedStation)
   const setSelectedStation = useStore((state) => state.setSelectedStation)
   const geoJsonSource = useRef<GeoJSONSource | undefined>(undefined)
+  const tooltipRef = useRef<HTMLDivElement | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const onStationClick = (e: MapMouseEvent) => {
     if (!e.features) return
@@ -23,6 +26,10 @@ export default function StationMarkers({ map }: Props) {
   }
 
   const geoJSON = useMemo(() => {
+    const priceColor = createPriceColor(
+      stations.map((station) => Number(station.Price))
+    )
+
     return {
       type: "FeatureCollection" as const,
       features: stations
@@ -36,6 +43,7 @@ export default function StationMarkers({ map }: Props) {
           properties: {
             id: station.Address,
             data: station,
+            color: priceColor(Number(station.Price)),
           },
           geometry: {
             type: "Point" as const,
@@ -45,44 +53,100 @@ export default function StationMarkers({ map }: Props) {
     }
   }, [stations, selectedStation])
 
+  const geoJSONRef = useRef(geoJSON)
+  geoJSONRef.current = geoJSON
+
   useEffect(() => {
     if (map === null || stations.length === 0) return
+    if (geoJsonSource.current !== undefined) return
 
-    if (geoJsonSource.current === undefined) {
-      // Create the source
-      map.addSource("stations", {
-        type: "geojson",
-        data: geoJSON,
-      })
+    map.addSource("stations", {
+      type: "geojson",
+      data: geoJSONRef.current,
+    })
 
-      map.addLayer({
-        id: "station-markers",
-        type: "symbol",
-        source: "stations",
-        layout: {
-          "icon-image": "disabled-pin",
-          "icon-allow-overlap": true,
-          "icon-anchor": "bottom",
-          "icon-size": 0.1,
-        },
-        paint: {
-          "icon-color": "#023f7a"
-        }
-      })
-      geoJsonSource.current = map.getSource("stations")
+    map.addLayer({
+      id: "station-markers",
+      type: "symbol",
+      source: "stations",
+      layout: {
+        "icon-image": "disabled-pin",
+        "icon-allow-overlap": true,
+        "icon-anchor": "bottom",
+        "icon-size": 0.1,
+      },
+      paint: {
+        "icon-color": ["get", "color"],
+      },
+    })
+    geoJsonSource.current = map.getSource("stations")
 
-      map.on("click", "station-markers", onStationClick)
-      map.on("mouseenter", "station-markers", () => {
-        map.getCanvas().style.cursor = "pointer"
+    const tooltip = document.createElement("div")
+    tooltip.style.position = "absolute"
+    tooltip.style.padding = "4px 8px"
+    tooltip.style.background = "#ffffff"
+    tooltip.style.color = "#222222"
+    tooltip.style.borderRadius = "4px"
+    tooltip.style.fontSize = "16px"
+    tooltip.style.fontWeight = "600"
+    tooltip.style.pointerEvents = "none"
+    tooltip.style.whiteSpace = "nowrap"
+    tooltip.style.transform = "translate(-50%, -100%)"
+    tooltip.style.marginTop = "-8px"
+    tooltip.style.zIndex = "10"
+    tooltip.style.display = "none"
+    map.getContainer().appendChild(tooltip)
+    tooltipRef.current = tooltip
+
+    const onEnter = (e: MapMouseEvent) => {
+      map.getCanvas().style.cursor = "pointer"
+
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ["station-markers"],
       })
-      map.on("mouseleave", "station-markers", () => {
-        map.getCanvas().style.cursor = ""
-      })
-    } else {
-      // Update the source
-      geoJsonSource.current.setData(geoJSON)
+      if (!features?.[0]?.properties) return
+
+      const station = JSON.parse(features[0].properties.data)
+
+      timeoutRef.current = setTimeout(() => {
+        tooltip.textContent = `$${station.Price}`
+        tooltip.style.left = `${e.point.x}px`
+        tooltip.style.top = `${e.point.y}px`
+        tooltip.style.display = "block"
+      }, 500)
     }
-  }, [geoJSON, map])
+    const onLeave = () => {
+      map.getCanvas().style.cursor = ""
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+      tooltip.style.display = "none"
+    }
+
+    map.on("click", "station-markers", onStationClick)
+    map.on("mouseenter", "station-markers", onEnter)
+    map.on("mouseleave", "station-markers", onLeave)
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+      map.off("click", "station-markers", onStationClick)
+      map.off("mouseenter", "station-markers", onEnter)
+      map.off("mouseleave", "station-markers", onLeave)
+      if (map.getLayer("station-markers")) map.removeLayer("station-markers")
+      if (map.getSource("stations")) map.removeSource("stations")
+      tooltip.remove()
+      tooltipRef.current = null
+      geoJsonSource.current = undefined
+    }
+  }, [map, stations.length])
+
+  useEffect(() => {
+    geoJsonSource.current?.setData(geoJSON)
+  }, [geoJSON])
 
   return <></>
 }
