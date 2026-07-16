@@ -17,6 +17,9 @@ import { FetchNearestResponse } from "./types/dto"
 import { debounce } from "lodash"
 import { useStore } from "./state/state"
 
+const MAX_LOCATION_ATTEMPTS = 5
+const LOCATION_RETRY_DELAY = 5000
+
 function App() {
   const [loading, setLoading] = useState(false)
 
@@ -27,20 +30,35 @@ function App() {
   const setDate = useStore((state) => state.setDate)
 
   useEffect(() => {
-    let watchId: number | undefined
+    let cancelled = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
 
-    if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
+    const requestLocation = (attempt: number) => {
+      console.log('attempt', attempt)
+      if (cancelled || !navigator.geolocation) return
+
+      navigator.geolocation.getCurrentPosition(
         (pos) => {
+          if (cancelled) return
+
           setUserLocation({
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
           })
         },
-        undefined,
+        () => {
+          if (cancelled || attempt >= MAX_LOCATION_ATTEMPTS) return
+
+          retryTimer = setTimeout(
+            () => requestLocation(attempt + 1),
+            LOCATION_RETRY_DELAY
+          )
+        },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       )
     }
+
+    requestLocation(1)
 
     Emitter.on("AXIOS_START", () => {
       setLoading((state) => true)
@@ -50,7 +68,8 @@ function App() {
     })
 
     return () => {
-      if (watchId !== undefined) navigator.geolocation.clearWatch(watchId)
+      cancelled = true
+      if (retryTimer !== undefined) clearTimeout(retryTimer)
     }
   }, [])
 
