@@ -23,11 +23,12 @@ API.interceptors.response.use(
 )
 
 export async function fetchNearest(
-  coords: string,
-  radius: number | string
+  topLeft: string,
+  bottomRight: string,
+  signal?: AbortSignal
 ): Promise<FetchNearestResponse | Error> {
   try {
-    return (await API.get(`/cheapest/${coords}?radius=${radius}`)).data
+    return (await API.get(`/current?topLeft=${topLeft}&bottomRight=${bottomRight}`, { signal })).data
   } catch (err) {
     return err as Error
   }

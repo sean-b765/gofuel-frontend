@@ -52,15 +52,7 @@ const StationList = ({}: Props) => {
                       <ListItemIcon>
                         <Chip
                           size="small"
-                          label={`$${station.Price}`}
-                          sx={{ marginRight: "8px" }}
-                        />
-                        <Chip
-                          size="small"
-                          label={`${
-                            Math.round(station.DistanceTo * 100) / 100
-                          }km`}
-                          sx={{ marginRight: "8px" }}
+                          label={`$${station.Price.Ulp91}`}
                         />
                       </ListItemIcon>
                       <ListItemText>
