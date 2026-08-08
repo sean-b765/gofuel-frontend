@@ -10,11 +10,8 @@ import {
 import { Main } from "./components/Main"
 import Header from "./components/Header"
 import AppTheme from "./theme/AppTheme"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import Emitter from "./services/eventemitter"
-import { fetchNearest } from "./api/api"
-import { FetchNearestResponse } from "./types/dto"
-import { debounce } from "lodash"
 import { useStore } from "./state/state"
 
 const MAX_LOCATION_ATTEMPTS = 5
@@ -23,11 +20,8 @@ const LOCATION_RETRY_DELAY = 5000
 function App() {
   const [loading, setLoading] = useState(false)
 
-  const setStations = useStore((state) => state.setStations)
-  const searchRadius = useStore((state) => state.searchRadius)
   const userLocation = useStore((state) => state.userLocation)
   const setUserLocation = useStore((state) => state.setUserLocation)
-  const setDate = useStore((state) => state.setDate)
 
   useEffect(() => {
     let cancelled = false
@@ -72,31 +66,6 @@ function App() {
       if (retryTimer !== undefined) clearTimeout(retryTimer)
     }
   }, [])
-
-  const debouncedFetch = useCallback(
-    debounce((lat: number, lng: number, rad: number) => {
-      if (!lat || !lng) return
-
-      fetchNearest(`${lat},${lng}`, rad).then(
-        (res: FetchNearestResponse | Error) => {
-          if (res instanceof Error) return
-
-          setStations(res.Stations || [])
-          if (res.Date) setDate(res.Date)
-        }
-      )
-    }, 750),
-    []
-  )
-
-  useEffect(() => {
-    if (userLocation && userLocation.lat && userLocation.lng)
-      debouncedFetch(userLocation.lat, userLocation.lng, searchRadius)
-
-    return () => {
-      debouncedFetch.cancel()
-    }
-  }, [userLocation, searchRadius])
 
   return (
     <AppTheme>

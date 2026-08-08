@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from "@mui/material"
 import { useStore } from "../state/state"
+import logo from "../logo.svg"
 
 export default function Header() {
   const date = useStore((s) => s.date)
@@ -17,11 +18,9 @@ export default function Header() {
       spacing={2}
     >
       <Stack direction="row" sx={{ gap: 1 }} alignItems="center">
-        <Box component="span" fontSize="36px">
-          ⛽
-        </Box>
+        <Box component="img" src={logo} sx={{ width: 40, height: 40 }} />
         <Typography component="h1" variant="h3">
-          Perth Fuel
+          GoFuel
         </Typography>
         {date && (
           <Typography component="p" variant="subtitle1" sx={{ opacity: 0.75 }}>

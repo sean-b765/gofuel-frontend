@@ -11,16 +11,18 @@ import {
 } from "@mui/material"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { useStore } from "../state/state"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import mapboxGl, { Map as MapboxGLMap } from "mapbox-gl"
 import UserLocationMarker from "./UserLocationMarker"
 import SelectedStationMarker from "./SelectedStationMarker"
 import disabledPin from "../assets/disabled-pin.png"
 import StationMarkers from "./StationMarkers"
-import { fetchJourney } from "../api/api"
+import { fetchJourney, fetchNearest } from "../api/api"
+import { FetchNearestResponse } from "../types/dto"
 import { Journey } from "../types/util"
 import DriveEta from "../icons/DriveEta"
 import Launch from "../icons/Launch"
+import { debounce } from "lodash"
 
 mapboxGl.accessToken = process.env.REACT_APP_MAPBOX_KEY
 
@@ -33,6 +35,9 @@ const Map = () => {
   const journey = useStore((state) => state.journey)
   const setJourney = useStore((state) => state.setJourney)
   const userLocation = useStore((state) => state.userLocation)
+  const setStations = useStore((state) => state.setStations)
+  const setDate = useStore((state) => state.setDate)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Initialise the map
   useEffect(() => {
@@ -72,6 +77,50 @@ const Map = () => {
     mapRef.current.setCenter([userLocation.lng, userLocation.lat])
   }, [userLocation, initialised])
 
+  const debouncedFetch = useCallback(
+    debounce(() => {
+      if (!mapRef.current) return
+
+      const bounds = mapRef.current.getBounds()
+      if (!bounds) return
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      abortControllerRef.current = new AbortController()
+
+      const topLeft = bounds.getNorthWest()
+      const bottomRight = bounds.getSouthEast()
+
+      fetchNearest(
+        `${topLeft.lat},${topLeft.lng}`,
+        `${bottomRight.lat},${bottomRight.lng}`,
+        abortControllerRef.current.signal
+      ).then((res: FetchNearestResponse | Error) => {
+        if (res instanceof Error) return
+
+        setStations(res.Stations || [])
+        if (res.Date) setDate(res.Date)
+      })
+    }, 150),
+    []
+  )
+
+  useEffect(() => {
+    if (!mapRef.current) return
+
+    const map = mapRef.current
+    const onMove = () => debouncedFetch()
+
+    map.on("moveend", onMove)
+    debouncedFetch()
+
+    return () => {
+      map.off("moveend", onMove)
+      debouncedFetch.cancel()
+    }
+  }, [initialised, debouncedFetch])
+
   // Fetch the google directions journey when userLocation or selectedStation changes
   useEffect(() => {
     if (selectedStation === undefined || userLocation === undefined) return
@@ -100,7 +149,7 @@ const Map = () => {
               fontWeight={600}
               sx={{ opacity: 0.75 }}
             >
-              {selectedStation ? selectedStation.TradingName : "Map"}
+              {selectedStation ? selectedStation.Title : "Map"}
             </Typography>
           </Grid>
           <Grid mt={2} size={12}>
@@ -132,20 +181,13 @@ const Map = () => {
                 )}
               </div>
             </Grid>
-            {/* Price, distance */}
+            {/* Price */}
             {selectedStation && (
               <Grid size={12} my={2}>
                 <Grid>
                   <Chip
                     size="small"
-                    label={`$${selectedStation.Price}`}
-                    sx={{ marginRight: "8px" }}
-                  />
-                  <Chip
-                    size="small"
-                    label={`${
-                      Math.round(selectedStation.DistanceTo * 100) / 100
-                    }km`}
+                    label={`$${selectedStation.Price.Ulp91}`}
                   />
                 </Grid>
               </Grid>
@@ -170,7 +212,7 @@ const Map = () => {
                 )}
               </Grid>
             )}
-            {journey && !journeyLoading && (
+            {journey?.Duration && journey?.Distance && !journeyLoading && (
               <>
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="body2" display="flex">
