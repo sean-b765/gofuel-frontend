@@ -1,0 +1,7 @@
+# Example terraform.tfvars. Copy to terraform.tfvars to override defaults.
+
+# Optional: override defaults.
+# project     = "gofuel"
+# environment = "production"
+# domain_name = "gofuel.seanboaden.dev"
+# acm_domain  = "seanboaden.dev"
