@@ -102,7 +102,7 @@ const Map = () => {
         setStations(res.Stations || [])
         if (res.Date) setDate(res.Date)
       })
-    }, 750),
+    }, 150),
     []
   )
 
@@ -149,7 +149,7 @@ const Map = () => {
               fontWeight={600}
               sx={{ opacity: 0.75 }}
             >
-              {selectedStation ? selectedStation.TradingName : "Map"}
+              {selectedStation ? selectedStation.Title : "Map"}
             </Typography>
           </Grid>
           <Grid mt={2} size={12}>
@@ -212,7 +212,7 @@ const Map = () => {
                 )}
               </Grid>
             )}
-            {journey && !journeyLoading && (
+            {journey?.Duration && journey?.Distance && !journeyLoading && (
               <>
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="body2" display="flex">

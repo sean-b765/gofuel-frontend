@@ -10,7 +10,6 @@ export type Station = {
   Brand: string
   Date: string
   Price: Prices
-  TradingName: string
   Location: string
   Address: string
   Phone: string
