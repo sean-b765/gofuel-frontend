@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: ["master", "hotfix/oidc"]
+    branches: ["master"]
     paths-ignore:
       - "infrastructure/**"
       - "*.md"
