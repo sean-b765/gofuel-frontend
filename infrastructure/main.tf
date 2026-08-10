@@ -4,9 +4,10 @@ locals {
     Environment = var.environment
   }
 
-  github_repo = "sean-b765/gofuel-frontend"
   github_ref  = "environment:production"
   bucket_name = "gofuel-frontend"
+
+  github_oidc_subject = "repo:sean-b765@61043071/gofuel-frontend@464445857:${local.github_ref}"
 }
 
 # ----------------------------------------------------------------------------
@@ -48,7 +49,7 @@ data "aws_iam_policy_document" "deploy_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.github_repo}:${local.github_ref}"]
+      values   = [local.github_oidc_subject]
     }
   }
 }
