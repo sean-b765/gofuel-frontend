@@ -7,6 +7,10 @@ on:
       - "infrastructure/**"
       - "*.md"
 
+env:
+  AWS_REGION: ap-southeast-2
+  AWS_ROLE: arn:aws:iam::476720619618:role/gofuel-deploy
+
 permissions:
   id-token: write
   contents: read
@@ -24,8 +28,8 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ap-southeast-2
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
