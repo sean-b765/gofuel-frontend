@@ -2,14 +2,14 @@
 # Project: gofuel
 
 ## Stack
-- Create React App (`react-scripts build` -> `build/`)
+- React Router framework (Vite) — SPA mode (`ssr: false`)
 - Deploy: GitHub Actions -> S3 + CloudFront (no Amplify)
 - Infra: Terraform in `infrastructure/`, applied locally
 
 ## Commands
-- `npm run build` - production build to `build/`
-- `npm test` - run tests
-- `npm start` - dev server
+- `npm run dev` - dev server
+- `npm run build` - production build to `build/client/`
+- `npm run typecheck` - typecheck (runs `react-router typegen` then `tsc`)
 - Infra (`infrastructure/`):
   - `terraform init` then `terraform apply` (run locally, state is gitignored)
   - `terraform fmt -recursive` - format check
@@ -24,8 +24,8 @@ Set from `terraform output -raw <name>`:
 | `S3_BUCKET`             | `s3_bucket`                  |
 | `CF_DIST_ID`            | `cloudfront_distribution_id` |
 
-Plus app secrets `REACT_APP_BASE_URL`, `REACT_APP_MAPBOX_KEY`.
+Plus app secrets `VITE_BASE_URL`, `VITE_MAPBOX_KEY`.
 
 ## Lint / typecheck
-CRA default eslint config is wired via `react-scripts` (`extends: react-app`).
-No separate lint/typecheck scripts are defined in `package.json`.
+- No lint script configured; TypeScript typecheck via `npm run typecheck`.
+- CRA `extends: react-app` eslint config removed during Vite migration.

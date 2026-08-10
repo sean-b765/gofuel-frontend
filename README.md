@@ -4,21 +4,24 @@
 
 [Demo](https://gofuel.seanboaden.dev/)
 
-- `React.js`
+- `React.js` (React Router framework + Vite)
 - State management: `zustand`
 - UI: `mui`
 
 **Third-Party**
 
-- `react-mapbox-gl`
+- `mapbox-gl`
 
-## `npm start`
+## `npm run dev`
 
 Runs the app in development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+The page will reload if you make edits.
+
+## `npm run build`
+
+Builds the app for production to `build/client/`.
 
 ## Deployment
 
@@ -44,6 +47,6 @@ Then set these GitHub repo secrets from the terraform outputs:
 | `S3_BUCKET`           | `s3_bucket`                  |
 | `CF_DIST_ID`          | `cloudfront_distribution_id` |
 
-Also set app secrets `REACT_APP_BASE_URL` and `REACT_APP_MAPBOX_KEY`.
+Also set app secrets `VITE_BASE_URL` and `VITE_MAPBOX_KEY`.
 
 Finally, create a CNAME for `gofuel.seanboaden.dev` -> the `cloudfront_domain_name` output (DNS lives in Cloudflare).

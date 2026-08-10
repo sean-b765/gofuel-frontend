@@ -24,7 +24,7 @@ import DriveEta from "../icons/DriveEta"
 import Launch from "../icons/Launch"
 import { debounce } from "lodash"
 
-mapboxGl.accessToken = process.env.REACT_APP_MAPBOX_KEY
+mapboxGl.accessToken = import.meta.env.VITE_MAPBOX_KEY
 
 const Map = () => {
   const [initialised, setInitialised] = useState(false)

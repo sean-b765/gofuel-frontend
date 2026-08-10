@@ -4,7 +4,7 @@ import { FetchNearestResponse } from "../types/dto"
 import { Journey } from "../types/util"
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_BASE_URL,
+  baseURL: import.meta.env.VITE_BASE_URL,
 })
 
 API.interceptors.request.use((req: any) => {
