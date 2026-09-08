@@ -47,11 +47,7 @@ const StationList = ({}: Props) => {
           <List>
             {stations.map((station, key) => {
               return (
-                <Tooltip
-                  key={key}
-                  followCursor
-                  title={`${station.Address} | ${station.Phone}`}
-                >
+                <Tooltip key={key} followCursor title={station.Address}>
                   <ListItemButton
                     selected={station === selectedStation}
                     onClick={() =>
@@ -64,7 +60,7 @@ const StationList = ({}: Props) => {
                       <Chip
                         style={{ marginRight: "0.5rem" }}
                         size="small"
-                        label={`$${station.Price.Ulp91}`}
+                        label={`${station.Price.Ulp91}`}
                       />
                     </ListItemIcon>
                     <ListItemText>{station.Title}</ListItemText>

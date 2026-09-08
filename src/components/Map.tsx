@@ -4,6 +4,7 @@ import {
   CardContent,
   CircularProgress,
   Divider,
+  IconButton,
   Link,
   List,
   ListItem,
@@ -25,6 +26,7 @@ import { Journey } from "../types/util"
 import { Prices } from "../types/station"
 import DriveEta from "../icons/DriveEta"
 import Launch from "../icons/Launch"
+import Close from "../icons/Close"
 import { debounce } from "lodash"
 
 mapboxGl.accessToken = import.meta.env.VITE_MAPBOX_KEY
@@ -42,6 +44,7 @@ const Map = () => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const [journeyLoading, setJourneyLoading] = useState(false)
   const selectedStation = useStore((state) => state.selectedStation)
+  const setSelectedStation = useStore((state) => state.setSelectedStation)
   const journey = useStore((state) => state.journey)
   const setJourney = useStore((state) => state.setJourney)
   const userLocation = useStore((state) => state.userLocation)
@@ -185,12 +188,38 @@ const Map = () => {
       {selectedStation && (
         <Card
           variant="outlined"
-          sx={{ position: "absolute", right: 8, bottom: 8, zIndex: 1 }}
+          sx={{
+            position: "absolute",
+            zIndex: 1,
+            right: { xs: "auto", md: 2 },
+            left: { xs: 2, md: "auto" },
+            bottom: { xs: "calc(40vh + 8px)", md: 2 },
+            maxWidth: { xs: "calc(100% - 16px)", md: 360 },
+            maxHeight: { xs: "50vh", md: "calc(100% - 16px)" },
+            overflow: "auto",
+          }}
         >
           <CardContent>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {selectedStation.Title}
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 1,
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight={600}>
+                {selectedStation.Title}
+              </Typography>
+              <IconButton
+                aria-label="Close"
+                size="small"
+                edge="end"
+                onClick={() => setSelectedStation(undefined)}
+              >
+                <Close size={16} />
+              </IconButton>
+            </Box>
             <List dense disablePadding sx={{ my: 1 }}>
               {Object.entries(selectedStation.Price)
                 .filter(([, price]) => price > 0)
@@ -198,7 +227,7 @@ const Map = () => {
                   <ListItem key={fuel} disableGutters>
                     <ListItemText
                       primary={fuelLabels[fuel as keyof Prices] ?? fuel}
-                      secondary={`$${price.toFixed(2)}/L`}
+                      secondary={`${price.toFixed(2)}`}
                     />
                   </ListItem>
                 ))}

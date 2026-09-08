@@ -9,6 +9,9 @@ export const Main = () => {
         position: "relative",
         width: "100vw",
         height: "100vh",
+        "@supports (height: 100dvh)": {
+          height: "100dvh",
+        },
         overflow: "hidden",
       }}
     >
@@ -16,10 +19,13 @@ export const Main = () => {
       <Box
         sx={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          width: 320,
           zIndex: 1,
+          top: { xs: "auto", md: 0 },
+          left: { xs: 0, md: 0 },
+          right: { xs: 0, md: "auto" },
+          bottom: 0,
+          width: { xs: "100%", md: 320 },
+          height: { xs: "40vh", md: "auto" },
           display: "flex",
           flexDirection: "column",
         }}
