@@ -27,7 +27,7 @@ export default function StationMarkers({ map }: Props) {
 
   const geoJSON = useMemo(() => {
     const priceColor = createPriceColor(
-      stations.map((station) => station.Price.Ulp91)
+      stations.map((station) => station.Price.Ulp91),
     )
 
     return {
@@ -36,7 +36,7 @@ export default function StationMarkers({ map }: Props) {
         .filter(
           (station) =>
             station.Address + `${station.Phone}` !==
-            selectedStation?.Address + `${selectedStation?.Phone}`
+            selectedStation?.Address + `${selectedStation?.Phone}`,
         )
         .map((station) => ({
           type: "Feature" as const,
@@ -109,7 +109,7 @@ export default function StationMarkers({ map }: Props) {
       const station = JSON.parse(features[0].properties.data)
 
       timeoutRef.current = setTimeout(() => {
-        tooltip.textContent = `$${station.Price.Ulp91}`
+        tooltip.textContent = `${station.Price.Ulp91}`
         tooltip.style.left = `${e.point.x}px`
         tooltip.style.top = `${e.point.y}px`
         tooltip.style.display = "block"
