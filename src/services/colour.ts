@@ -24,7 +24,11 @@ export function createPriceColor(prices: number[]) {
       t = high === mid ? 1 : 0.5 + (0.5 * (price - mid)) / (high - mid)
     }
     t = Math.max(0, Math.min(1, t))
-    const hue = 120 * (1 - t)
-    return `hsl(${hue}, 70%, 45%)`
+
+    // Green -> amber -> red, with the midpoint landing on orange rather
+    // than yellow so mid-priced markers stay readable on a light map.
+    const hue =
+      t <= 0.5 ? 135 - 100 * (t / 0.5) : 35 - 30 * ((t - 0.5) / 0.5)
+    return `hsl(${hue}, 55%, 42%)`
   }
 }

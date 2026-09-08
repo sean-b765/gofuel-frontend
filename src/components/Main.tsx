@@ -1,24 +1,31 @@
-import { Box, Grid } from "@mui/material"
+import { Box } from "@mui/material"
 import StationList from "./StationList"
 import Map from "./Map"
-import { useStore } from "../state/state"
 
-type Props = {}
-
-export const Main = ({}: Props) => {
-  const selectedStation = useStore((state) => state.selectedStation)
-
+export const Main = () => {
   return (
-    <Box sx={{ width: "100%", maxWidth: { sm: "100%", md: "1700px" } }}>
-      <Grid container spacing={2} columns={12}>
-        <Grid size={12}>
-          <Map />
-        </Grid>
-
-        <Grid size={12}>
-          <StationList />
-        </Grid>
-      </Grid>
+    <Box
+      sx={{
+        position: "relative",
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      <Map />
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: 320,
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <StationList />
+      </Box>
     </Box>
   )
 }

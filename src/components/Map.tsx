@@ -1,11 +1,13 @@
 import {
+  Box,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Divider,
-  Grid,
   Link,
+  List,
+  ListItem,
+  ListItemText,
   Tooltip,
   Typography,
 } from "@mui/material"
@@ -20,11 +22,19 @@ import StationMarkers from "./StationMarkers"
 import { fetchJourney, fetchNearest } from "../api/api"
 import { FetchNearestResponse } from "../types/dto"
 import { Journey } from "../types/util"
+import { Prices } from "../types/station"
 import DriveEta from "../icons/DriveEta"
 import Launch from "../icons/Launch"
 import { debounce } from "lodash"
 
 mapboxGl.accessToken = import.meta.env.VITE_MAPBOX_KEY
+
+const fuelLabels: Record<keyof Prices, string> = {
+  Ulp91: "91 Unleaded",
+  Ulp95: "95 Unleaded",
+  Ulp98: "98 Unleaded",
+  Diesel: "Diesel",
+}
 
 const Map = () => {
   const [initialised, setInitialised] = useState(false)
@@ -45,7 +55,7 @@ const Map = () => {
 
     const map = new MapboxGLMap({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/dark-v11",
+      style: "mapbox://styles/mapbox/standard",
       center: [115.86256114388702, -31.950664055777565],
       zoom: 12,
     })
@@ -57,7 +67,9 @@ const Map = () => {
       mapRef.current.loadImage(disabledPin, (err, img) => {
         if (mapRef.current == null || err) return
         if (mapRef.current.hasImage("disabled-pin")) return
-        mapRef.current.addImage("disabled-pin", img as ImageBitmap, { sdf: true })
+        mapRef.current.addImage("disabled-pin", img as ImageBitmap, {
+          sdf: true,
+        })
       })
 
       setInitialised(true)
@@ -95,7 +107,7 @@ const Map = () => {
       fetchNearest(
         `${topLeft.lat},${topLeft.lng}`,
         `${bottomRight.lat},${bottomRight.lng}`,
-        abortControllerRef.current.signal
+        abortControllerRef.current.signal,
       ).then((res: FetchNearestResponse | Error) => {
         if (res instanceof Error) return
 
@@ -103,7 +115,7 @@ const Map = () => {
         if (res.Date) setDate(res.Date)
       })
     }, 150),
-    []
+    [],
   )
 
   useEffect(() => {
@@ -128,7 +140,7 @@ const Map = () => {
     setJourneyLoading(true)
     fetchJourney(
       `${userLocation.lat},${userLocation.lng}`,
-      `${selectedStation.Latitude},${selectedStation.Longitude}`
+      `${selectedStation.Latitude},${selectedStation.Longitude}`,
     )
       .then((journey) => {
         if (journey === undefined) return
@@ -140,77 +152,80 @@ const Map = () => {
   }, [selectedStation, userLocation])
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Grid container>
-          <Grid size={12}>
-            <Typography
-              variant="overline"
-              fontWeight={600}
-              sx={{ opacity: 0.75 }}
-            >
-              {selectedStation ? selectedStation.Title : "Map"}
+    <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+      <div
+        ref={mapContainerRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        {initialised && (
+          <>
+            <UserLocationMarker map={mapRef.current} />
+            <SelectedStationMarker map={mapRef.current} />
+            <StationMarkers map={mapRef.current} />
+          </>
+        )}
+        {!initialised && (
+          <CircularProgress
+            variant="indeterminate"
+            size={30}
+            sx={{
+              position: "absolute",
+              left: "calc(50% - 15px)",
+              top: "calc(50% - 15px)",
+            }}
+          />
+        )}
+      </div>
+      {selectedStation && (
+        <Card
+          variant="outlined"
+          sx={{ position: "absolute", right: 8, bottom: 8, zIndex: 1 }}
+        >
+          <CardContent>
+            <Typography variant="subtitle1" fontWeight={600}>
+              {selectedStation.Title}
             </Typography>
-          </Grid>
-          <Grid mt={2} size={12}>
-            <Grid size={12} height={500} sx={{ position: "relative" }}>
-              <div
-                ref={mapContainerRef}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                {initialised && (
-                  <>
-                    <UserLocationMarker map={mapRef.current} />
-                    <SelectedStationMarker map={mapRef.current} />
-                    <StationMarkers map={mapRef.current} />
-                  </>
-                )}
-                {!initialised && (
-                  <CircularProgress
-                    variant="indeterminate"
-                    size={30}
-                    sx={{
-                      position: "absolute",
-                      left: "calc(50% - 15px)",
-                      top: "calc(50% - 15px)",
-                    }}
-                  />
-                )}
-              </div>
-            </Grid>
-            {/* Price */}
-            {selectedStation && (
-              <Grid size={12} my={2}>
-                <Grid>
-                  <Chip
-                    size="small"
-                    label={`$${selectedStation.Price.Ulp91}`}
-                  />
-                </Grid>
-              </Grid>
-            )}
-            {/* Details */}
-            {selectedStation && (
-              <Grid size={12} mb={2}>
-                {selectedStation.Address && (
-                  <Typography variant="body2">
+            <List dense disablePadding sx={{ my: 1 }}>
+              {Object.entries(selectedStation.Price)
+                .filter(([, price]) => price > 0)
+                .map(([fuel, price]) => (
+                  <ListItem key={fuel} disableGutters>
+                    <ListItemText
+                      primary={fuelLabels[fuel as keyof Prices] ?? fuel}
+                      secondary={`$${price.toFixed(2)}/L`}
+                    />
+                  </ListItem>
+                ))}
+            </List>
+            {selectedStation.Address && (
+              <Tooltip title="Open directions in Google Maps">
+                <Link
+                  href={`https://www.google.com/maps/dir/${userLocation?.lat},${userLocation?.lng}/${selectedStation?.Latitude},${selectedStation?.Longitude}`}
+                  target="_blank"
+                  color="textPrimary"
+                  sx={{ textDecoration: "none" }}
+                >
+                  <Typography variant="body2" sx={{ display: "inline" }}>
                     {selectedStation.Address}
                   </Typography>
-                )}
-                {selectedStation.Location && (
-                  <Typography variant="body1">
-                    {selectedStation.Location}
-                  </Typography>
-                )}
-                {selectedStation.Phone && (
-                  <Typography variant="overline">
-                    {selectedStation.Phone}
-                  </Typography>
-                )}
-              </Grid>
+                  <Launch
+                    size={12}
+                    sx={{ ml: 1, display: "inline" }}
+                    color="inherit"
+                  />
+                </Link>
+              </Tooltip>
+            )}
+            {selectedStation.Phone && (
+              <Typography variant="overline">
+                {selectedStation.Phone}
+              </Typography>
             )}
             {journey?.Duration && journey?.Distance && !journeyLoading && (
               <>
@@ -221,21 +236,6 @@ const Map = () => {
                     sx={{ mr: 1, display: "flex", alignItems: "center" }}
                     color="#555"
                   />
-                  <Tooltip title="Open directions in Google Maps">
-                    <Link
-                      href={`https://www.google.com/maps/dir/${userLocation?.lat},${userLocation?.lng}/${selectedStation?.Latitude},${selectedStation?.Longitude}`}
-                      target="_blank"
-                      color="textPrimary"
-                      sx={{ textDecoration: "none" }}
-                    >
-                      {journey.Duration} | {journey.Distance}
-                      <Launch
-                        size={12}
-                        sx={{ ml: 1, display: "inline" }}
-                        color="white"
-                      />
-                    </Link>
-                  </Tooltip>
                 </Typography>
               </>
             )}
@@ -245,10 +245,10 @@ const Map = () => {
                 <CircularProgress variant="indeterminate" size={20} />
               </>
             )}
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+    </Box>
   )
 }
 
